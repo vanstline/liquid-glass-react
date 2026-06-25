@@ -1,14 +1,8 @@
-import { Geist } from "next/font/google"
 import { useState, useRef } from "react"
 import LiquidGlass from "liquid-glass-react"
 import { LogOutIcon, Github } from "lucide-react"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-})
-
-export default function Home() {
+export default function App() {
   // User Info Card Controls
   const [displacementScale, setDisplacementScale] = useState(100)
   const [blurAmount, setBlurAmount] = useState(0.5)
@@ -45,7 +39,7 @@ export default function Home() {
 
   return (
     <div
-      className={`${geistSans.className} grid grid-cols-1 grid-rows-2 md:grid-rows-1 md:grid-cols-3 shadow-2xl w-full max-w-5xl mx-auto md:my-10 h-screen md:max-h-[calc(100vh-5rem)] md:rounded-3xl overflow-hidden font-[family-name:var(--font-geist-sans)]`}
+      className="grid grid-cols-1 grid-rows-2 md:grid-rows-1 md:grid-cols-3 shadow-2xl w-full max-w-5xl mx-auto md:my-10 h-screen md:max-h-[calc(100vh-5rem)] md:rounded-3xl overflow-hidden font-sans"
     >
       {/* Left Panel - Glass Effect Demo */}
       <div className="flex-1 relative overflow-auto min-h-screen md:col-span-2" ref={containerRef} onScroll={handleScroll}>

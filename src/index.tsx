@@ -1,9 +1,23 @@
-import { type CSSProperties, forwardRef, useCallback, useEffect, useRef, useState } from "react"
+import {
+  type CSSProperties,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 import { ShaderDisplacementGenerator, fragmentShaders } from "./shader-utils"
-import { displacementMap, polarDisplacementMap, prominentDisplacementMap } from "./utils"
+import {
+  displacementMap,
+  polarDisplacementMap,
+  prominentDisplacementMap,
+} from "./utils"
 
 // Generate shader-based displacement map using shaderUtils
-const generateShaderDisplacementMap = (width: number, height: number): string => {
+const generateShaderDisplacementMap = (
+  width: number,
+  height: number,
+): string => {
   const generator = new ShaderDisplacementGenerator({
     width,
     height,
@@ -16,7 +30,10 @@ const generateShaderDisplacementMap = (width: number, height: number): string =>
   return dataUrl
 }
 
-const getMap = (mode: "standard" | "polar" | "prominent" | "shader", shaderMapUrl?: string) => {
+const getMap = (
+  mode: "standard" | "polar" | "prominent" | "shader",
+  shaderMapUrl?: string,
+) => {
   switch (mode) {
     case "standard":
       return displacementMap
@@ -32,7 +49,15 @@ const getMap = (mode: "standard" | "polar" | "prominent" | "shader", shaderMapUr
 }
 
 /* ---------- SVG filter (edge-only displacement) ---------- */
-const GlassFilter: React.FC<{ id: string; displacementScale: number; aberrationIntensity: number; width: number; height: number; mode: "standard" | "polar" | "prominent" | "shader"; shaderMapUrl?: string }> = ({
+const GlassFilter: React.FC<{
+  id: string
+  displacementScale: number
+  aberrationIntensity: number
+  width: number
+  height: number
+  mode: "standard" | "polar" | "prominent" | "shader"
+  shaderMapUrl?: string
+}> = ({
   id,
   displacementScale,
   aberrationIntensity,
@@ -45,11 +70,31 @@ const GlassFilter: React.FC<{ id: string; displacementScale: number; aberrationI
     <defs>
       <radialGradient id={`${id}-edge-mask`} cx="50%" cy="50%" r="50%">
         <stop offset="0%" stopColor="black" stopOpacity="0" />
-        <stop offset={`${Math.max(30, 80 - aberrationIntensity * 2)}%`} stopColor="black" stopOpacity="0" />
+        <stop
+          offset={`${Math.max(30, 80 - aberrationIntensity * 2)}%`}
+          stopColor="black"
+          stopOpacity="0"
+        />
         <stop offset="100%" stopColor="white" stopOpacity="1" />
       </radialGradient>
-      <filter id={id} x="-35%" y="-35%" width="170%" height="170%" colorInterpolationFilters="sRGB">
-        <feImage id="feimage" x="0" y="0" width="100%" height="100%" result="DISPLACEMENT_MAP" href={getMap(mode, shaderMapUrl)} preserveAspectRatio="xMidYMid slice" />
+      <filter
+        id={id}
+        x="-35%"
+        y="-35%"
+        width="170%"
+        height="170%"
+        colorInterpolationFilters="sRGB"
+      >
+        <feImage
+          id="feimage"
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          result="DISPLACEMENT_MAP"
+          href={getMap(mode, shaderMapUrl)}
+          preserveAspectRatio="xMidYMid slice"
+        />
 
         {/* Create edge mask using the displacement map itself */}
         <feColorMatrix
@@ -62,14 +107,24 @@ const GlassFilter: React.FC<{ id: string; displacementScale: number; aberrationI
           result="EDGE_INTENSITY"
         />
         <feComponentTransfer in="EDGE_INTENSITY" result="EDGE_MASK">
-          <feFuncA type="discrete" tableValues={`0 ${aberrationIntensity * 0.05} 1`} />
+          <feFuncA
+            type="discrete"
+            tableValues={`0 ${aberrationIntensity * 0.05} 1`}
+          />
         </feComponentTransfer>
 
         {/* Original undisplaced image for center */}
         <feOffset in="SourceGraphic" dx="0" dy="0" result="CENTER_ORIGINAL" />
 
         {/* Red channel displacement with slight offset */}
-        <feDisplacementMap in="SourceGraphic" in2="DISPLACEMENT_MAP" scale={displacementScale * (mode === "shader" ? 1 : -1)} xChannelSelector="R" yChannelSelector="B" result="RED_DISPLACED" />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="DISPLACEMENT_MAP"
+          scale={displacementScale * (mode === "shader" ? 1 : -1)}
+          xChannelSelector="R"
+          yChannelSelector="B"
+          result="RED_DISPLACED"
+        />
         <feColorMatrix
           in="RED_DISPLACED"
           type="matrix"
@@ -81,7 +136,17 @@ const GlassFilter: React.FC<{ id: string; displacementScale: number; aberrationI
         />
 
         {/* Green channel displacement */}
-        <feDisplacementMap in="SourceGraphic" in2="DISPLACEMENT_MAP" scale={displacementScale * ((mode === "shader" ? 1 : -1) - aberrationIntensity * 0.05)} xChannelSelector="R" yChannelSelector="B" result="GREEN_DISPLACED" />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="DISPLACEMENT_MAP"
+          scale={
+            displacementScale *
+            ((mode === "shader" ? 1 : -1) - aberrationIntensity * 0.05)
+          }
+          xChannelSelector="R"
+          yChannelSelector="B"
+          result="GREEN_DISPLACED"
+        />
         <feColorMatrix
           in="GREEN_DISPLACED"
           type="matrix"
@@ -93,7 +158,17 @@ const GlassFilter: React.FC<{ id: string; displacementScale: number; aberrationI
         />
 
         {/* Blue channel displacement with slight offset */}
-        <feDisplacementMap in="SourceGraphic" in2="DISPLACEMENT_MAP" scale={displacementScale * ((mode === "shader" ? 1 : -1) - aberrationIntensity * 0.1)} xChannelSelector="R" yChannelSelector="B" result="BLUE_DISPLACED" />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="DISPLACEMENT_MAP"
+          scale={
+            displacementScale *
+            ((mode === "shader" ? 1 : -1) - aberrationIntensity * 0.1)
+          }
+          xChannelSelector="R"
+          yChannelSelector="B"
+          result="BLUE_DISPLACED"
+        />
         <feColorMatrix
           in="BLUE_DISPLACED"
           type="matrix"
@@ -105,20 +180,44 @@ const GlassFilter: React.FC<{ id: string; displacementScale: number; aberrationI
         />
 
         {/* Combine all channels with screen blend mode for chromatic aberration */}
-        <feBlend in="GREEN_CHANNEL" in2="BLUE_CHANNEL" mode="screen" result="GB_COMBINED" />
-        <feBlend in="RED_CHANNEL" in2="GB_COMBINED" mode="screen" result="RGB_COMBINED" />
+        <feBlend
+          in="GREEN_CHANNEL"
+          in2="BLUE_CHANNEL"
+          mode="screen"
+          result="GB_COMBINED"
+        />
+        <feBlend
+          in="RED_CHANNEL"
+          in2="GB_COMBINED"
+          mode="screen"
+          result="RGB_COMBINED"
+        />
 
         {/* Add slight blur to soften the aberration effect */}
-        <feGaussianBlur in="RGB_COMBINED" stdDeviation={Math.max(0.1, 0.5 - aberrationIntensity * 0.1)} result="ABERRATED_BLURRED" />
+        <feGaussianBlur
+          in="RGB_COMBINED"
+          stdDeviation={Math.max(0.1, 0.5 - aberrationIntensity * 0.1)}
+          result="ABERRATED_BLURRED"
+        />
 
         {/* Apply edge mask to aberration effect */}
-        <feComposite in="ABERRATED_BLURRED" in2="EDGE_MASK" operator="in" result="EDGE_ABERRATION" />
+        <feComposite
+          in="ABERRATED_BLURRED"
+          in2="EDGE_MASK"
+          operator="in"
+          result="EDGE_ABERRATION"
+        />
 
         {/* Create inverted mask for center */}
         <feComponentTransfer in="EDGE_MASK" result="INVERTED_MASK">
           <feFuncA type="table" tableValues="1 0" />
         </feComponentTransfer>
-        <feComposite in="CENTER_ORIGINAL" in2="INVERTED_MASK" operator="in" result="CENTER_CLEAN" />
+        <feComposite
+          in="CENTER_ORIGINAL"
+          in2="INVERTED_MASK"
+          operator="in"
+          result="CENTER_CLEAN"
+        />
 
         {/* Combine edge aberration with clean center */}
         <feComposite in="EDGE_ABERRATION" in2="CENTER_CLEAN" operator="over" />
@@ -149,6 +248,7 @@ const GlassContainer = forwardRef<
     glassSize?: { width: number; height: number }
     onClick?: () => void
     mode?: "standard" | "polar" | "prominent" | "shader"
+    dark?: boolean
   }>
 >(
   (
@@ -171,10 +271,13 @@ const GlassContainer = forwardRef<
       glassSize = { width: 270, height: 69 },
       onClick,
       mode = "standard",
+      dark = false,
     },
     ref,
   ) => {
-    const filterId = useState(() => `lg-filter-${Math.random().toString(36).slice(2, 11)}`)[0]
+    const filterId = useState(
+      () => `lg-filter-${Math.random().toString(36).slice(2, 11)}`,
+    )[0]
     const [shaderMapUrl, setShaderMapUrl] = useState<string>("")
 
     const isFirefox = navigator.userAgent.toLowerCase().includes("firefox")
@@ -182,7 +285,10 @@ const GlassContainer = forwardRef<
     // Generate shader displacement map when in shader mode
     useEffect(() => {
       if (mode === "shader") {
-        const url = generateShaderDisplacementMap(glassSize.width, glassSize.height)
+        const url = generateShaderDisplacementMap(
+          glassSize.width,
+          glassSize.height,
+        )
         setShaderMapUrl(url)
       }
     }, [mode, glassSize.width, glassSize.height])
@@ -193,8 +299,21 @@ const GlassContainer = forwardRef<
     }
 
     return (
-      <div ref={ref} className={`relative ${className} ${active ? "active" : ""} ${Boolean(onClick) ? "cursor-pointer" : ""}`} style={style} onClick={onClick}>
-        <GlassFilter mode={mode} id={filterId} displacementScale={displacementScale} aberrationIntensity={aberrationIntensity} width={glassSize.width} height={glassSize.height} shaderMapUrl={shaderMapUrl} />
+      <div
+        ref={ref}
+        className={`relative ${className} ${active ? "active" : ""} ${Boolean(onClick) ? "cursor-pointer" : ""}`}
+        style={style}
+        onClick={onClick}
+      >
+        <GlassFilter
+          mode={mode}
+          id={filterId}
+          displacementScale={displacementScale}
+          aberrationIntensity={aberrationIntensity}
+          width={glassSize.width}
+          height={glassSize.height}
+          shaderMapUrl={shaderMapUrl}
+        />
 
         <div
           className="glass"
@@ -207,7 +326,14 @@ const GlassContainer = forwardRef<
             padding,
             overflow: "hidden",
             transition: "all 0.2s ease-in-out",
-            boxShadow: overLight ? "0px 16px 70px rgba(0, 0, 0, 0.75)" : "0px 12px 40px rgba(0, 0, 0, 0.25)",
+            background: dark
+              ? "rgba(25, 25, 30, 0.55)"
+              : undefined,
+            boxShadow: dark
+              ? "inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 1px 2px rgba(0,0,0,0.25), 0 12px 40px rgba(0, 0, 0, 0.45)"
+              : overLight
+                ? "0px 16px 70px rgba(0, 0, 0, 0.75)"
+                : "0px 12px 40px rgba(0, 0, 0, 0.25)",
           }}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
@@ -226,14 +352,34 @@ const GlassContainer = forwardRef<
             }
           />
 
+          {/* inner surface glow for dark mode */}
+          {dark && (
+            <span
+              style={{
+                position: "absolute",
+                inset: "0",
+                borderRadius: `${cornerRadius}px`,
+                background:
+                  "radial-gradient(ellipse 90% 60% at 50% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 60%)",
+                pointerEvents: "none",
+                zIndex: 1,
+              }}
+            />
+          )}
+
           {/* user content stays sharp */}
           <div
-            className="transition-all duration-150 ease-in-out text-white"
+            className="transition-all duration-150 ease-in-out"
             style={{
               position: "relative",
-              zIndex: 1,
+              zIndex: 2,
               font: "500 20px/1 system-ui",
-              textShadow: overLight ? "0px 2px 12px rgba(0, 0, 0, 0)" : "0px 2px 12px rgba(0, 0, 0, 0.4)",
+              color: dark ? "rgba(255, 255, 255, 0.92)" : "#ffffff",
+              textShadow: dark
+                ? "0 1px 2px rgba(0, 0, 0, 0.6)"
+                : overLight
+                  ? "0px 2px 12px rgba(0, 0, 0, 0)"
+                  : "0px 2px 12px rgba(0, 0, 0, 0.4)",
             }}
           >
             {children}
@@ -263,6 +409,7 @@ interface LiquidGlassProps {
   overLight?: boolean
   mode?: "standard" | "polar" | "prominent" | "shader"
   onClick?: () => void
+  dark?: boolean
 }
 
 export default function LiquidGlass({
@@ -282,12 +429,16 @@ export default function LiquidGlass({
   style = {},
   mode = "standard",
   onClick,
+  dark = false,
 }: LiquidGlassProps) {
   const glassRef = useRef<HTMLDivElement>(null)
   const [isHovered, setIsHovered] = useState(false)
   const [isActive, setIsActive] = useState(false)
   const [glassSize, setGlassSize] = useState({ width: 270, height: 69 })
-  const [internalGlobalMousePos, setInternalGlobalMousePos] = useState({ x: 0, y: 0 })
+  const [internalGlobalMousePos, setInternalGlobalMousePos] = useState({
+    x: 0,
+    y: 0,
+  })
   const [internalMouseOffset, setInternalMouseOffset] = useState({ x: 0, y: 0 })
 
   // Use external mouse position if provided, otherwise use internal
@@ -336,7 +487,12 @@ export default function LiquidGlass({
     return () => {
       container.removeEventListener("mousemove", handleMouseMove)
     }
-  }, [handleMouseMove, mouseContainer, externalGlobalMousePos, externalMouseOffset])
+  }, [
+    handleMouseMove,
+    mouseContainer,
+    externalGlobalMousePos,
+    externalMouseOffset,
+  ])
 
   // Calculate directional scaling based on mouse position
   const calculateDirectionalScale = useCallback(() => {
@@ -356,7 +512,9 @@ export default function LiquidGlass({
     // Calculate distance from mouse to pill edges (not center)
     const edgeDistanceX = Math.max(0, Math.abs(deltaX) - pillWidth / 2)
     const edgeDistanceY = Math.max(0, Math.abs(deltaY) - pillHeight / 2)
-    const edgeDistance = Math.sqrt(edgeDistanceX * edgeDistanceX + edgeDistanceY * edgeDistanceY)
+    const edgeDistance = Math.sqrt(
+      edgeDistanceX * edgeDistanceX + edgeDistanceY * edgeDistanceY,
+    )
 
     // Activation zone: 200px from edges
     const activationZone = 200
@@ -379,13 +537,20 @@ export default function LiquidGlass({
     const normalizedY = deltaY / centerDistance
 
     // Calculate stretch factors with fade-in
-    const stretchIntensity = Math.min(centerDistance / 300, 1) * elasticity * fadeInFactor
+    const stretchIntensity =
+      Math.min(centerDistance / 300, 1) * elasticity * fadeInFactor
 
     // X-axis scaling: stretch horizontally when moving left/right, compress when moving up/down
-    const scaleX = 1 + Math.abs(normalizedX) * stretchIntensity * 0.3 - Math.abs(normalizedY) * stretchIntensity * 0.15
+    const scaleX =
+      1 +
+      Math.abs(normalizedX) * stretchIntensity * 0.3 -
+      Math.abs(normalizedY) * stretchIntensity * 0.15
 
     // Y-axis scaling: stretch vertically when moving up/down, compress when moving left/right
-    const scaleY = 1 + Math.abs(normalizedY) * stretchIntensity * 0.3 - Math.abs(normalizedX) * stretchIntensity * 0.15
+    const scaleY =
+      1 +
+      Math.abs(normalizedY) * stretchIntensity * 0.3 -
+      Math.abs(normalizedX) * stretchIntensity * 0.15
 
     return `scaleX(${Math.max(0.8, scaleX)}) scaleY(${Math.max(0.8, scaleY)})`
   }, [globalMousePos, elasticity, glassSize])
@@ -402,9 +567,17 @@ export default function LiquidGlass({
     const pillWidth = glassSize.width
     const pillHeight = glassSize.height
 
-    const edgeDistanceX = Math.max(0, Math.abs(globalMousePos.x - pillCenterX) - pillWidth / 2)
-    const edgeDistanceY = Math.max(0, Math.abs(globalMousePos.y - pillCenterY) - pillHeight / 2)
-    const edgeDistance = Math.sqrt(edgeDistanceX * edgeDistanceX + edgeDistanceY * edgeDistanceY)
+    const edgeDistanceX = Math.max(
+      0,
+      Math.abs(globalMousePos.x - pillCenterX) - pillWidth / 2,
+    )
+    const edgeDistanceY = Math.max(
+      0,
+      Math.abs(globalMousePos.y - pillCenterY) - pillHeight / 2,
+    )
+    const edgeDistance = Math.sqrt(
+      edgeDistanceX * edgeDistanceX + edgeDistanceY * edgeDistanceY,
+    )
 
     const activationZone = 200
     return edgeDistance > activationZone ? 0 : 1 - edgeDistance / activationZone
@@ -486,7 +659,9 @@ export default function LiquidGlass({
         className={className}
         style={baseStyle}
         cornerRadius={cornerRadius}
-        displacementScale={overLight ? displacementScale * 0.5 : displacementScale}
+        displacementScale={
+          overLight ? displacementScale * 0.5 : displacementScale
+        }
         blurAmount={blurAmount}
         saturation={saturation}
         aberrationIntensity={aberrationIntensity}
@@ -501,6 +676,7 @@ export default function LiquidGlass({
         overLight={overLight}
         onClick={onClick}
         mode={mode}
+        dark={dark}
       >
         {children}
       </GlassContainer>
@@ -515,18 +691,21 @@ export default function LiquidGlass({
           transform: baseStyle.transform,
           transition: baseStyle.transition,
           pointerEvents: "none",
-          mixBlendMode: "screen",
-          opacity: 0.2,
+          mixBlendMode: dark ? "normal" : "screen",
+          opacity: dark ? 1 : 0.2,
           padding: "1.5px",
-          WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+          WebkitMask:
+            "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
           WebkitMaskComposite: "xor",
           maskComposite: "exclude",
-          boxShadow: "0 0 0 0.5px rgba(255, 255, 255, 0.5) inset, 0 1px 3px rgba(255, 255, 255, 0.25) inset, 0 1px 4px rgba(0, 0, 0, 0.35)",
+          boxShadow: dark
+            ? "0 0 0 0.5px rgba(180, 180, 190, 0.22) inset, 0 1px 3px rgba(255, 255, 255, 0.08) inset, 0 1px 4px rgba(0, 0, 0, 0.45)"
+            : "0 0 0 0.5px rgba(255, 255, 255, 0.5) inset, 0 1px 3px rgba(255, 255, 255, 0.25) inset, 0 1px 4px rgba(0, 0, 0, 0.35)",
           background: `linear-gradient(
           ${135 + mouseOffset.x * 1.2}deg,
           rgba(255, 255, 255, 0.0) 0%,
-          rgba(255, 255, 255, ${0.12 + Math.abs(mouseOffset.x) * 0.008}) ${Math.max(10, 33 + mouseOffset.y * 0.3)}%,
-          rgba(255, 255, 255, ${0.4 + Math.abs(mouseOffset.x) * 0.012}) ${Math.min(90, 66 + mouseOffset.y * 0.4)}%,
+          rgba(${dark ? "200, 200, 215" : "255, 255, 255"}, ${dark ? 0.05 : 0.12 + Math.abs(mouseOffset.x) * 0.008}) ${Math.max(10, 33 + mouseOffset.y * 0.3)}%,
+          rgba(${dark ? "200, 200, 215" : "255, 255, 255"}, ${dark ? 0.15 : 0.4 + Math.abs(mouseOffset.x) * 0.012}) ${Math.min(90, 66 + mouseOffset.y * 0.4)}%,
           rgba(255, 255, 255, 0.0) 100%
         )`,
         }}
@@ -542,17 +721,20 @@ export default function LiquidGlass({
           transform: baseStyle.transform,
           transition: baseStyle.transition,
           pointerEvents: "none",
-          mixBlendMode: "overlay",
+          mixBlendMode: dark ? "normal" : "overlay",
           padding: "1.5px",
-          WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+          WebkitMask:
+            "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
           WebkitMaskComposite: "xor",
           maskComposite: "exclude",
-          boxShadow: "0 0 0 0.5px rgba(255, 255, 255, 0.5) inset, 0 1px 3px rgba(255, 255, 255, 0.25) inset, 0 1px 4px rgba(0, 0, 0, 0.35)",
+          boxShadow: dark
+            ? "0 0 0 0.5px rgba(180, 180, 190, 0.14) inset, 0 1px 2px rgba(255, 255, 255, 0.05) inset, 0 1px 3px rgba(0, 0, 0, 0.35)"
+            : "0 0 0 0.5px rgba(255, 255, 255, 0.5) inset, 0 1px 3px rgba(255, 255, 255, 0.25) inset, 0 1px 4px rgba(0, 0, 0, 0.35)",
           background: `linear-gradient(
           ${135 + mouseOffset.x * 1.2}deg,
           rgba(255, 255, 255, 0.0) 0%,
-          rgba(255, 255, 255, ${0.32 + Math.abs(mouseOffset.x) * 0.008}) ${Math.max(10, 33 + mouseOffset.y * 0.3)}%,
-          rgba(255, 255, 255, ${0.6 + Math.abs(mouseOffset.x) * 0.012}) ${Math.min(90, 66 + mouseOffset.y * 0.4)}%,
+          rgba(${dark ? "200, 200, 215" : "255, 255, 255"}, ${dark ? 0.08 : 0.32 + Math.abs(mouseOffset.x) * 0.008}) ${Math.max(10, 33 + mouseOffset.y * 0.3)}%,
+          rgba(${dark ? "200, 200, 215" : "255, 255, 255"}, ${dark ? 0.22 : 0.6 + Math.abs(mouseOffset.x) * 0.012}) ${Math.min(90, 66 + mouseOffset.y * 0.4)}%,
           rgba(255, 255, 255, 0.0) 100%
         )`,
         }}
@@ -570,9 +752,10 @@ export default function LiquidGlass({
               transform: baseStyle.transform,
               pointerEvents: "none",
               transition: "all 0.2s ease-out",
-              opacity: isHovered || isActive ? 0.5 : 0,
-              backgroundImage: "radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 50%)",
-              mixBlendMode: "overlay",
+              opacity: isHovered || isActive ? (dark ? 0.18 : 0.5) : 0,
+              backgroundImage:
+                "radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 50%)",
+              mixBlendMode: dark ? "normal" : "overlay",
             }}
           />
           <div
@@ -584,9 +767,10 @@ export default function LiquidGlass({
               transform: baseStyle.transform,
               pointerEvents: "none",
               transition: "all 0.2s ease-out",
-              opacity: isActive ? 0.5 : 0,
-              backgroundImage: "radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 80%)",
-              mixBlendMode: "overlay",
+              opacity: isActive ? (dark ? 0.12 : 0.5) : 0,
+              backgroundImage:
+                "radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 80%)",
+              mixBlendMode: dark ? "normal" : "overlay",
             }}
           />
           <div
@@ -600,9 +784,10 @@ export default function LiquidGlass({
               left: baseStyle.left,
               pointerEvents: "none",
               transition: "all 0.2s ease-out",
-              opacity: isHovered ? 0.4 : isActive ? 0.8 : 0,
-              backgroundImage: "radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%)",
-              mixBlendMode: "overlay",
+              opacity: isHovered ? (dark ? 0.15 : 0.4) : isActive ? (dark ? 0.25 : 0.8) : 0,
+              backgroundImage:
+                "radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%)",
+              mixBlendMode: dark ? "normal" : "overlay",
             }}
           />
         </>
